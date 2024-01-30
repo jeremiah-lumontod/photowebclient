@@ -22,19 +22,26 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.reactive.function.client.WebClient;
 
 
 @Controller
 public class AlbumsController {
 
 	private final OAuth2AuthorizedClientService oauth2ClientService;
-	private final RestTemplate restTemplate;
+	//private final RestTemplate restTemplate;
 
+//	@Autowired
+//	RestTemplate restTemplate;
 
 	@Autowired
-	public AlbumsController(OAuth2AuthorizedClientService oauth2ClientService, RestTemplate restTemplate) {
+	private final WebClient webClient;
+
+	@Autowired
+	public AlbumsController(OAuth2AuthorizedClientService oauth2ClientService, WebClient webClient) {
 		this.oauth2ClientService = oauth2ClientService;
-		this.restTemplate = restTemplate;
+		//this.restTemplate = restTemplate;
+		this.webClient = webClient;
 	}
 
 	@GetMapping("/albums")
@@ -66,13 +73,22 @@ public class AlbumsController {
 
 
 		String url = "http://localhost:8082/albums";
-		HttpHeaders headers = new HttpHeaders();
+
+		/**HttpHeaders headers = new HttpHeaders();
 		headers.add("Authorization", "Bearer " + jwtAccessToken);
 		HttpEntity<List<AlbumRest>> entity = new HttpEntity<>(headers);
 		ResponseEntity<List<AlbumRest>> responseEntity =  restTemplate.exchange(url, HttpMethod.GET, entity, new ParameterizedTypeReference<List<AlbumRest>>() {});
 
-		List<AlbumRest> albums = responseEntity.getBody();
+		List<AlbumRest> albums = responseEntity.getBody();*/
+
+		List<AlbumRest> albums = webClient.get()
+				.uri(url)
+				.retrieve()
+				.bodyToMono(new ParameterizedTypeReference<List<AlbumRest>>(){})
+				.block();
+
 		model.addAttribute("albums", albums);
+
 		return "albums";
 
 	}
